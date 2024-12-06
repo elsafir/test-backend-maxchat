@@ -10,7 +10,7 @@ Robot Management Service adalah REST API yang dibuat menggunakan bahasa pemrogra
 
 ### **2. Clone Repository**
 ```bash
-git clone <repository_url>
+git clone [<repository_url>](https://github.com/elsafir/test-backend-maxchat.git)
 cd <repository_folder>
 ```
 ### **3. Jalankan Proyek**
