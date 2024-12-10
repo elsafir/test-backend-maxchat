@@ -43,7 +43,7 @@ func main() {
 	r.PUT("/robots/:code", updateRobot)
 	r.DELETE("/robots/:code", deleteRobot)
 
-	r.GET("/filters", filterRobots)
+	r.GET("/robots/filters", filterRobots)
 
 	r.Run()
 }
@@ -69,6 +69,26 @@ func createRobot(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	for _, robot := range robots {
+		if robot.Code == newRobot.Code {
+			c.JSON(http.StatusConflict, gin.H{"error": "same code"})
+			return
+		}
+	}
+	if !contains(statuses, newRobot.Status) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Status"})
+		return
+	}
+	if !contains(models, newRobot.Model) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Model"})
+		return
+	}
+	for _, tech := range newRobot.Tech {
+		if !contains(techs, tech) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Tech"})
+			return
+		}
+	}
 	robots = append(robots, newRobot)
 	c.JSON(http.StatusCreated, newRobot)
 }
@@ -84,6 +104,20 @@ func updateRobot(c *gin.Context) {
 		if robot.Code == code {
 			robots[i] = updatedRobot
 			c.JSON(http.StatusOK, updatedRobot)
+			return
+		}
+	}
+	if !contains(statuses, updatedRobot.Status) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Status"})
+		return
+	}
+	if !contains(models, updatedRobot.Model) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Model"})
+		return
+	}
+	for _, tech := range updatedRobot.Tech {
+		if !contains(techs, tech) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Tech"})
 			return
 		}
 	}
@@ -107,7 +141,7 @@ func filterRobots(c *gin.Context) {
 	techFilters := c.QueryArray("tech")
 	var filtered []Robot
 	for _, robot := range robots {
-		if (model == "" || robot.Model == model) && (len(techFilters) == 0 || hasTech(robot.Tech, techFilters)) {
+		if (model == "" || robot.Model == model) || (len(techFilters) == 0 || hasTech(robot.Tech, techFilters)) {
 			filtered = append(filtered, robot)
 		}
 	}
