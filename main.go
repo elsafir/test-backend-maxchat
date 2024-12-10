@@ -23,8 +23,56 @@ var models = []string{"car", "transformation", "humanoid"}
 var techs = []string{"AI", "car", "robot", "cyborg"}
 var statuses = []string{"progress", "active", "inactive"}
 
-func init() {
+var statusTranslations = map[string]map[string]string{
+	"progress": {
+		"en": "progress",
+		"id": "proses",
+	},
+	"active": {
+		"en": "active",
+		"id": "aktif",
+	},
+	"inactive": {
+		"en": "inactive",
+		"id": "tidak aktif",
+	},
+}
 
+var techTranslations = map[string]map[string]string{
+	"AI": {
+		"en": "AI",
+		"id": "Kecerdasan Buatan",
+	},
+	"car": {
+		"en": "car",
+		"id": "mobil",
+	},
+	"robot": {
+		"en": "robot",
+		"id": "robot",
+	},
+	"cyborg": {
+		"en": "cyborg",
+		"id": "cyborg",
+	},
+}
+
+var modelTranslations = map[string]map[string]string{
+	"car": {
+		"en": "car",
+		"id": "mobil",
+	},
+	"transformation": {
+		"en": "transformation",
+		"id": "transformasi",
+	},
+	"humanoid": {
+		"en": "humanoid",
+		"id": "humanoid",
+	},
+}
+
+func init() {
 	data, err := ioutil.ReadFile("data.txt")
 	if err != nil {
 		panic(err)
@@ -42,21 +90,45 @@ func main() {
 	r.POST("/robots", createRobot)
 	r.PUT("/robots/:code", updateRobot)
 	r.DELETE("/robots/:code", deleteRobot)
-
 	r.GET("/robots/filters", filterRobots)
 
 	r.Run()
 }
 
 func getRobots(c *gin.Context) {
-	c.JSON(http.StatusOK, robots)
+	lang := c.DefaultQuery("lang", "en") // Default ke English
+	var translatedRobots []map[string]interface{}
+
+	for _, robot := range robots {
+		translatedRobot := map[string]interface{}{
+			"code":        robot.Code,
+			"name":        robot.Name,
+			"description": robot.Description,
+			"model":       translate(robot.Model, modelTranslations, lang),
+			"tech":        translateSlice(robot.Tech, techTranslations, lang),
+			"status":      translate(robot.Status, statusTranslations, lang),
+		}
+		translatedRobots = append(translatedRobots, translatedRobot)
+	}
+
+	c.JSON(http.StatusOK, translatedRobots)
 }
 
 func getRobotByCode(c *gin.Context) {
 	code := c.Param("code")
+	lang := c.DefaultQuery("lang", "en")
+
 	for _, robot := range robots {
 		if robot.Code == code {
-			c.JSON(http.StatusOK, robot)
+			translatedRobot := map[string]interface{}{
+				"code":        robot.Code,
+				"name":        robot.Name,
+				"description": robot.Description,
+				"model":       translate(robot.Model, modelTranslations, lang),
+				"tech":        translateSlice(robot.Tech, techTranslations, lang),
+				"status":      translate(robot.Status, statusTranslations, lang),
+			}
+			c.JSON(http.StatusOK, translatedRobot)
 			return
 		}
 	}
@@ -123,7 +195,6 @@ func updateRobot(c *gin.Context) {
 	}
 	c.JSON(http.StatusNotFound, gin.H{"error": "Robot not found"})
 }
-
 func deleteRobot(c *gin.Context) {
 	code := c.Param("code")
 	for i, robot := range robots {
@@ -136,6 +207,22 @@ func deleteRobot(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"error": "Robot not found"})
 }
 
+func translate(key string, translations map[string]map[string]string, lang string) string {
+	if val, exists := translations[key]; exists {
+		if translated, ok := val[lang]; ok {
+			return translated
+		}
+	}
+	return key // Kembalikan nilai asli jika tidak ada terjemahan
+}
+
+func translateSlice(keys []string, translations map[string]map[string]string, lang string) []string {
+	var translated []string
+	for _, key := range keys {
+		translated = append(translated, translate(key, translations, lang))
+	}
+	return translated
+}
 func filterRobots(c *gin.Context) {
 	model := c.Query("model")
 	techFilters := c.QueryArray("tech")
@@ -156,7 +243,6 @@ func hasTech(robotTech []string, filters []string) bool {
 	}
 	return true
 }
-
 func contains(slice []string, item string) bool {
 	for _, v := range slice {
 		if strings.ToLower(v) == strings.ToLower(item) {
