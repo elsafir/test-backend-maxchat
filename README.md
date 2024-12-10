@@ -123,7 +123,7 @@ cd <repository_folder>
   ```
 
 ### **6. Filter Robot**
-- **URL**: `/filters`
+- **URL**: `robots/filters`
 - **Metode**: `GET`
 - **Query Parameters**:
   - `model` (opsional): Filter berdasarkan model (contoh: `humanoid`).
