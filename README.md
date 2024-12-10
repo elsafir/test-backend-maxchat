@@ -123,7 +123,7 @@ cd <repository_folder>
   ```
 
 ### **6. Filter Robot**
-- **URL**: `robots/filters`
+- **URL**: `/robots/filters`
 - **Metode**: `GET`
 - **Query Parameters**:
   - `model` (opsional): Filter berdasarkan model (contoh: `humanoid`).
@@ -140,6 +140,25 @@ cd <repository_folder>
           "status": "active"
       }
   ]
+  ```
+### **7. Pindah Bahasa**
+- **URL**: `/robots?lang=id`
+- **Metode**: `GET`
+- **Response**:
+  ```json
+  [
+    {
+        "code": "R001",
+        "description": "Updated description",
+        "model": "humanoid",
+        "name": "Updated Bot",
+        "status": "aktif",
+        "tech": [
+            "Kecerdasan Buatan",
+            "cyborg"
+        ]
+    }
+   ]
   ```
 
 ---
