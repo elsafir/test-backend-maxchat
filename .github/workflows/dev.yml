@@ -1,0 +1,108 @@
+name: auto-deploy-dev
+
+on:
+  push:
+    tags: [ "*-dev" ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: prepare repo and pull
+        run: |
+          if [ ! -d ${{ vars.WORK_DIR }} ]; then
+            mkdir -p ${{ vars.WORK_DIR }}
+          fi
+          if [ ! -e "${{ vars.WORK_DIR }}hopis-be-repo/.git" ]; then
+            cd ${{ vars.WORK_DIR }}
+            rm -rf -- hopis-be-repo
+            git clone git@github.com:sabbi-id/hopis-be.git hopis-be-repo
+            cd ${{ vars.WORK_DIR }}hopis-be-repo
+            git checkout dev
+          else
+            cd ${{ vars.WORK_DIR }}hopis-be-repo
+            git checkout dev
+            git pull
+          fi
+
+      - name: prepare paths and files for main api
+        run: |
+          mkdir -p ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev
+          mkdir -p ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/language
+          rm -f -- ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          rm -rf -- ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/language
+          cp ${{ vars.WORK_DIR }}hopis-be-repo/cmd/api-main/config.yml-example ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml;
+          cp -r ${{ vars.WORK_DIR }}hopis-be-repo/assets/language ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev;
+
+      - name: prepare paths and files for jkn api
+        run: |
+          mkdir -p ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev
+          mkdir -p ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/language
+          rm -f -- ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          rm -rf -- ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/language
+          cp ${{ vars.WORK_DIR }}hopis-be-repo/cmd/api-jkn/config.yml-example ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          cp -r ${{ vars.WORK_DIR }}hopis-be-repo/assets/language ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev;
+
+      - name: set api config for main api
+        run: |
+          sed -i '9s/$/127.0.0.1/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '10s/$/${{ vars.DEV_HTTP_PORT_MAIN }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '13s/$/${{ secrets.DEV_DB_DSN }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '14s/$/5/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '15s/$/5/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '16s/$/100/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '19s/$/false/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '20s/$/false/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '23s/$/${{ secrets.DEV_MS_DSN }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '26s/$/en/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '27s/$/language\/en/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '28s/$/data.json/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '31s/$/${{ vars.DEV_MINIO_ENDPOINT }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '32s/$/ap-southeast-1/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '33s/$/${{ secrets.DEV_MINIO_ACCESS_KEY }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '34s/$/${{ secrets.DEV_MINIO_SECRET_KEY }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '35s/$/false/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '40s/$/${{ vars.DEV_WHATSAPP_URL }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '41s/$/${{ secrets.DEV_WHATSAPP_KEY }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '44s/$/${{ vars.DEV_ERP_HOST }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '45s/$/${{ secrets.DEV_ERP_USR }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '46s/$/${{ secrets.DEV_ERP_PWD }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '47s/$/HOPIS/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+          sed -i '48s/$/HOPIS-WAREHOUS/' ${{ vars.WORK_DIR }}hopis-be-build/api-main-dev/config.yml
+
+      - name: set api config for jkn api
+        run: |
+          sed -i '9s/$/127.0.0.1/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '10s/$/${{ vars.DEV_HTTP_PORT_JKN }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '13s/$/${{ secrets.DEV_DB_DSN }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '14s/$/5/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '15s/$/5/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '16s/$/100/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '19s/$/false/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '20s/$/false/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '23s/$/${{ secrets.DEV_MS_DSN }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '26s/$/en/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '27s/$/language\/en/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '28s/$/data.json/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '40s/$/${{ vars.DEV_WHATSAPP_URL }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '41s/$/${{ secrets.DEV_WHATSAPP_KEY }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '44s/$/${{ vars.DEV_ERP_HOST }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '45s/$/${{ secrets.DEV_ERP_USR }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '46s/$/${{ secrets.DEV_ERP_PWD }}/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '47s/$/HOPIS/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+          sed -i '48s/$/HOPIS-WAREHOUS/' ${{ vars.WORK_DIR }}hopis-be-build/api-jkn-dev/config.yml
+
+      - name: build api and restart main service
+        run: |
+          cd ${{ vars.WORK_DIR }}hopis-be-repo/cmd/api-main
+          /usr/local/go/bin/go build -o ${{ vars.WORK_DIR }}/hopis-be-build/api-main-dev/api
+          sudo /bin/systemctl restart hopis-be-api-main-dev.service
+
+      - name: build api and restart jkn service
+        run: |
+          cd ${{ vars.WORK_DIR }}hopis-be-repo/cmd/api-jkn
+          /usr/local/go/bin/go build -o ${{ vars.WORK_DIR }}/hopis-be-build/api-jkn-dev/api
+          sudo /bin/systemctl restart hopis-be-api-main-dev.service
